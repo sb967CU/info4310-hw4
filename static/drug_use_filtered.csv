@@ -1,0 +1,86 @@
+,age,use,freq,drug
+0,12,3.9,3.0,alcohol
+1,13,8.5,6.0,alcohol
+2,14,18.1,5.0,alcohol
+3,15,29.2,6.0,alcohol
+4,16,40.1,10.0,alcohol
+5,17,49.3,13.0,alcohol
+6,18,58.7,24.0,alcohol
+7,19,64.6,36.0,alcohol
+8,20,69.7,48.0,alcohol
+9,21,83.2,52.0,alcohol
+10,22-23,84.2,52.0,alcohol
+11,24-25,83.1,52.0,alcohol
+12,26-29,80.7,52.0,alcohol
+13,30-34,77.5,52.0,alcohol
+14,35-49,75.0,52.0,alcohol
+15,50-64,67.2,52.0,alcohol
+16,65+,49.3,52.0,alcohol
+17,12,1.1,4.0,marijuana
+18,13,3.4,15.0,marijuana
+19,14,8.7,24.0,marijuana
+20,15,14.5,25.0,marijuana
+21,16,22.5,30.0,marijuana
+22,17,28.0,36.0,marijuana
+23,18,33.7,52.0,marijuana
+24,19,33.4,60.0,marijuana
+25,20,34.0,60.0,marijuana
+26,21,33.0,52.0,marijuana
+27,22-23,28.4,52.0,marijuana
+28,24-25,24.9,60.0,marijuana
+29,26-29,20.8,52.0,marijuana
+30,30-34,16.4,72.0,marijuana
+31,35-49,10.4,48.0,marijuana
+32,50-64,7.3,52.0,marijuana
+33,65+,1.2,36.0,marijuana
+34,12,0.1,5.0,cocaine
+35,13,0.1,1.0,cocaine
+36,14,0.1,5.5,cocaine
+37,15,0.5,4.0,cocaine
+38,16,1.0,7.0,cocaine
+39,17,2.0,5.0,cocaine
+40,18,3.2,5.0,cocaine
+41,19,4.1,5.5,cocaine
+42,20,4.9,8.0,cocaine
+43,21,4.8,5.0,cocaine
+44,22-23,4.5,5.0,cocaine
+45,24-25,4.0,6.0,cocaine
+46,26-29,3.2,5.0,cocaine
+47,30-34,2.1,8.0,cocaine
+48,35-49,1.5,15.0,cocaine
+49,50-64,0.9,36.0,cocaine
+50,65+,0.0,-,cocaine
+51,12,0.2,52.0,hallucinogen
+52,13,0.6,6.0,hallucinogen
+53,14,1.6,3.0,hallucinogen
+54,15,2.1,4.0,hallucinogen
+55,16,3.4,3.0,hallucinogen
+56,17,4.8,3.0,hallucinogen
+57,18,7.0,4.0,hallucinogen
+58,19,8.6,3.0,hallucinogen
+59,20,7.4,2.0,hallucinogen
+60,21,6.3,4.0,hallucinogen
+61,22-23,5.2,3.0,hallucinogen
+62,24-25,4.5,2.0,hallucinogen
+63,26-29,3.2,3.0,hallucinogen
+64,30-34,1.8,2.0,hallucinogen
+65,35-49,0.6,3.0,hallucinogen
+66,50-64,0.3,44.0,hallucinogen
+67,65+,0.1,2.0,hallucinogen
+68,12,2.0,36.0,pain reliever
+69,13,2.4,14.0,pain reliever
+70,14,3.9,12.0,pain reliever
+71,15,5.5,10.0,pain reliever
+72,16,6.2,7.0,pain reliever
+73,17,8.5,9.0,pain reliever
+74,18,9.2,12.0,pain reliever
+75,19,9.4,12.0,pain reliever
+76,20,10.0,10.0,pain reliever
+77,21,9.0,15.0,pain reliever
+78,22-23,10.0,15.0,pain reliever
+79,24-25,9.0,15.0,pain reliever
+80,26-29,8.3,13.0,pain reliever
+81,30-34,5.9,22.0,pain reliever
+82,35-49,4.2,12.0,pain reliever
+83,50-64,2.5,12.0,pain reliever
+84,65+,0.6,24.0,pain reliever

@@ -1,0 +1,665 @@
+<html>
+
+<head>
+  <title>INFO4310 HW4 Interactive Drug Use Visualization</title>
+
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.14.2/highlight.min.js"></script>
+  <script src="https://d3js.org/d3.v5.min.js"></script>
+  <script src="https://d3js.org/topojson.v2.min.js"></script>
+  <style>
+    body {
+      background-color: #101010;
+      font-family: 'Times New Roman', Times, serif;
+    }
+
+    .gridlines line {
+      stroke: #a5a5a5;
+    }
+
+    .gridlines .domain {
+      stroke: none;
+    }
+
+    #graph {
+      margin-left: auto;
+      margin-right: auto;
+      display: block;
+      color: #dcd9d9;
+    }
+
+    .button {
+      padding: 14px 30px;
+      margin-left: 2.5;
+      margin-right: 2.5px;
+      text-decoration: none;
+      font-size: 18px;
+      font-family: 'Times New Roman', Times, serif;
+      transition-duration: 0.3s;
+      cursor: pointer;
+      border-radius: 20px;
+      background-color: black;
+      color: #fffff2;
+    }
+
+    .b1 {
+      border: 3.5px solid black;
+      background-color: #2b2b2b;
+    }
+
+    .b1:hover {
+      background-color: black;
+      color: white;
+    }
+
+    /* "green", "red", "navy", "skyblue", "gold" */
+    .b2 {
+      border: 3.5px solid rgb(255, 7, 94);
+      background-color: rgba(255, 7, 94, 0.224);
+    }
+
+    .b2:hover {
+      background-color: rgb(255, 7, 94);
+      color: black;
+    }
+
+    .b3 {
+      border: 3.5px solid #16e19a;
+      background-color: #16e19a2f;
+    }
+
+    .b3:hover {
+      background-color: #16e19a;
+      color: black;
+    }
+
+    .b4 {
+      border: 3.5px solid whitesmoke;
+      background-color: rgba(245, 245, 245, 0.242);
+    }
+
+    .b4:hover {
+      background-color: whitesmoke;
+      color: black;
+    }
+
+    .b5 {
+      border: 3.5px solid #a032ff;
+      background-color: #9f32ff4e;
+    }
+
+    .b5:hover {
+      background-color: #a032ff;
+      color: black;
+    }
+
+    .b6 {
+      border: 3.5px solid rgb(0, 47, 255);
+      background-color: rgba(0, 47, 255, 0.249);
+    }
+
+    .b6:hover {
+      background-color: rgb(0, 47, 255);
+      color: black;
+    }
+
+    h2 {
+      font-size: 50px;
+      margin-top: 27px;
+      margin-bottom: 0px;
+    }
+
+    h3 {
+      font-size: 40px;
+      margin-top: 0px;
+      margin-bottom: 17px;
+      font-weight: lighter;
+    }
+
+    h2,
+    h3,
+    p {
+      text-align: center;
+      color: #fffff2;
+    }
+
+    p {
+      margin-top: 5px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <!--
+    <img src="cocaine.png" style="width: 70px; height: 80px;">
+  -->
+
+  <h2>
+    MEDIAN DRUG USE IN THE PAST 12 MONTHS FOR A GIVEN AGE
+  </h2>
+
+  <svg id="graph" height="700" width="1500">
+    <text id="drug" x="1500" y="300" text-anchor="end" alignment-baseline="hanging"></text>
+    <text id="age" x="1500" y="325" text-anchor="end" alignment-baseline="hanging"></text>
+    <text id="use" x="1500" y="350" text-anchor="end" alignment-baseline="hanging"></text>
+    <text id="freq" x="1500" y="375" text-anchor="end" alignment-baseline="hanging"></text>
+  </svg>
+
+  <h3>&#9760; PICK YOUR POISON &#9760;</h3>
+
+  <!-- alcohol, marijuana, cocaine, hallucinogen, pain reliever-->
+  <div align="center">
+    <button class="button b1" id="alldrugs" onclick="alldrugs()"><div><img src="needles.png" style="width: 140px; height: 80px;"><p>ALL DRUGS</p></div></button>
+    <button class="button b2" id="alcohol" onclick="alcohol()"><div><img src="alcoholic.png" style="width: 140px; height: 80px;"><p>ALCOLHOL</p></div></button>
+    <button class="button b3" id="marijuana" onclick="marijuana()"><div><img src="blunt.png" style="width: 140px; height: 80px;"><p>MARIJUANA</p></div></button>
+    <button class="button b4" id="cocaine" onclick="cocaine()"><div><img src="coke.png" style="width: 140px; height: 80px;"><p>COCAINE</p></div></button>
+    <button class="button b5" id="hallucinogen" onclick="hallucinogen()"><div><img src="hallucinate.png" style="width: 140px; height: 80px;"><p>HALLUCINOGENS</p></div></button>
+    <button class="button b6" id="painreliever" onclick="painreliever()"><div><img src="pillhand.png" style="width: 140px; height: 80px;"><p>PAIN KILLERS</p></div></button>
+  </div>
+
+  <script>
+
+    // svg graph
+    const graph = d3.select("svg#graph");
+    const width = graph.attr("width");
+    const height = graph.attr("height");
+    const margin = { top: 45, right: 170, bottom: 90, left: 90 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    let annotation = graph.append("g").attr("id", "annotation");
+    let chartArea = graph.append("g").attr("id", "dots")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+    const requestData = async function () {
+      let data = await d3.csv("drug_use_filtered.csv", d3.autoType)
+
+
+      // x axis = age
+      const set_of_ages = d3.set(data.map(function (d) { return (d.age).toString() })).values()
+      const ageScale = d3.scalePoint()
+        .domain(set_of_ages) // data.map(d => d.age)
+        .range([0, chartWidth])
+
+      // y axis = use
+      const useExtent = d3.extent(data, d => d['use']);
+      const useScale = d3.scaleLinear().domain(useExtent).range([chartHeight, 0]); // d3.scaleLinear() ?
+
+
+      // color scale
+      const drugScale = d3.scaleOrdinal()
+        .domain(["alcohol", "marijuana", "cocaine", "hallucinogen", "pain reliever"])
+        .range(["rgb(255, 7, 94)", "#16e19a", "whitesmoke", "#a032ff", "rgb(0, 47, 255)"]);
+
+
+      // use tickformat on axes
+      // add x axis
+      let bottomAxis = d3.axisBottom(ageScale);
+      let bottomGridlines = d3.axisBottom(ageScale)
+        .tickSize(-chartHeight - 10)
+        .tickFormat("")
+      annotation.append("g")
+        .attr("class", "xaxis")
+        .attr("transform", "translate(" + margin.left + "," + (chartHeight + margin.top + 10) + ")")
+        .style("font-size", "25px")
+        .style("font-family", "serif")
+        .call(bottomAxis);
+      annotation.append("g")
+        .attr("class", "x gridlines")
+        .attr("transform", "translate(" + margin.left + "," + (chartHeight + margin.top + 10) + ")")
+        .call(bottomGridlines);
+      annotation.append("text")
+        .attr("class", "xlabel")
+        .attr("text-anchor", "end")
+        .attr("x", width - 150)
+        .attr("y", height - 10)
+        .text("AGE")
+        .attr("fill", "#fffff2")
+        .style("font-size", "25px")
+        .style("font-family", "serif");
+
+      // add y axis
+      let leftAxis = d3.axisLeft(useScale);
+      let leftGridlines = d3.axisLeft(useScale)
+        .tickSize(-chartWidth - 10)
+        .tickFormat("")
+      annotation.append("g")
+        .attr("class", "yaxis")
+        .attr("transform", "translate(" + (margin.left - 10) + "," + margin.top + ")")
+        .style("font-size", "25px")
+        .style("font-family", "serif")
+        .call(leftAxis)
+      annotation.append("g")
+        .attr("class", "y gridlines")
+        .attr("transform", "translate(" + (margin.left - 10) + "," + margin.top + ")")
+        .call(leftGridlines);
+      annotation.append("text")
+        .attr("class", "ylabel")
+        .attr("text-anchor", "end")
+        .attr("x", -40)
+        .attr("y", 6)
+        .attr("dy", ".75em")
+        .attr("transform", "rotate(-90)")
+        .text("MEDIAN NR. USES PAST 12 MO")
+        .attr("fill", "#fffff2")
+        .style("font-size", "25px")
+        .style("font-family", "serif");
+
+
+      // populate graph with data
+      let circles = chartArea.selectAll("circle.dot").data(data)
+        .join(enter => enter.append("circle")
+          .attr("class", "dot")
+          .attr("opacity", 0.75)
+        )
+        .attr("cx", d => ageScale(d['age']))
+        .attr("cy", d => useScale(d['use'] + 0.5))
+        .attr("r", 13)
+        .style("stroke", "white")
+        .attr("fill", d => drugScale(d['drug'])) // colored by drug
+        .attr("freq", d => d["freq"])
+        .attr("drug", d => d["drug"])
+        .attr("age", d => d["age"])
+        .attr("use", d => d["use"])
+
+        .on("mouseover", function (d) {
+          d3.select(this)
+            .transition().duration(150)
+            .attr("stroke", drugScale(d['drug']))
+            .attr("stroke-width", 8);
+
+          d3.select("#freq").text("frequency: " + d['freq'] + "%")
+            .attr("fill", "#fffff2")
+            .style("font-size", "20px")
+            .style("font-family", "serif");
+          d3.select("#drug").text(d['drug'])
+            .attr("fill", "#fffff2")
+            .style("font-size", "20px")
+            .style("font-family", "serif");
+          d3.select("#age").text("age " + d['age'])
+            .attr("fill", "#fffff2")
+            .style("font-size", "20px")
+            .style("font-family", "serif");
+          d3.select("#use").text(d['use'] + " uses in past yr")
+            .attr("fill", "#fffff2")
+            .style("font-size", "20px")
+            .style("font-family", "serif");
+        })
+        .on("mouseout", function (d) {
+          d3.select(this)
+            .transition().duration(150)
+            .attr("stroke", "")
+            .attr("stroke-width", 1)
+            .attr("fill", drugScale(d['drug']));
+
+          d3.select("#freq").text("");
+          d3.select("#drug").text("");
+          d3.select("#age").text("");
+          d3.select("#use").text("");
+        });
+
+
+      // All drugs button 
+      var alldrugsButton = document.getElementById('alldrugs');
+      alldrugsButton.onclick = function (d) {
+
+        let circles = chartArea.selectAll("circle.dot").data(data)
+          .join(enter => enter.append("circle")
+            .attr("class", "dot")
+            .attr("opacity", 0.75))
+          .attr("cx", d => ageScale(d['age']))
+          .attr("cy", d => useScale(d['use'] + 0.5))
+          .attr("r", 13)
+          .style("stroke", "white")
+          .attr("fill", d => drugScale(d['drug']))
+          .attr("freq", d => d["freq"])
+          .attr("drug", d => d["drug"])
+          .attr("age", d => d["age"])
+          .attr("use", d => d["use"])
+          .on("mouseover", function (d) {
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", drugScale(d['drug']))
+              .attr("stroke-width", 8);
+
+            d3.select("#freq").text("frequency: " + d['freq'] + "%")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#drug").text(d['drug'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#age").text("age " + d['age'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#use").text(d['use'] + " uses in past yr")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+
+          })
+          .on("mouseout", function (d) {
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", "")
+              .attr("stroke-width", 1)
+              .attr("fill", d => drugScale(d['drug']));
+
+            d3.select("#freq").text("");
+            d3.select("#drug").text("");
+            d3.select("#age").text("");
+            d3.select("#use").text("");
+          });
+      }
+
+      // alcohol
+      var alcoholButton = document.getElementById('alcohol');
+      var alcoholfilt = data.filter(function (d) {
+        return d["drug"] === "alcohol"
+      })
+      alcoholButton.onclick = function (d) {
+        let circles = chartArea.selectAll("circle.dot").data(alcoholfilt)
+          .join(enter => enter.append("alcoholcircle")
+            .attr("class", "dot")
+            .attr("opacity", 0.75),
+            exit => exit.attr("fill", d => drugScale(d['drug']))
+          )
+          .attr("cx", d => ageScale(d['age']))
+          .attr("cy", d => useScale(d['use'] + 0.5))
+          .attr("r", 13)
+          .style("stroke", "white")
+          .attr("freq", d => d["freq"])
+          .attr("drug", d => d["drug"])
+          .attr("age", d => d["age"])
+          .attr("use", d => d["use"])
+          .on("mouseover", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", drugScale(d['drug']))
+              .attr("stroke-width", 8);
+
+            d3.select("#freq").text("frequency: " + d['freq'] + "%")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#drug").text(d['drug'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#age").text("age " + d['age'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#use").text(d['use'] + " uses in past yr")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+
+          })
+          .on("mouseout", function (d) {
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", "")
+              .attr("stroke-width", 1)
+              .attr("fill", drugScale(d['drug']));
+
+            d3.select("#freq").text("");
+            d3.select("#drug").text("");
+            d3.select("#age").text("");
+            d3.select("#use").text("");
+          });
+      }
+
+
+      // marijuana
+      var marijuanaButton = document.getElementById('marijuana');
+      var marijuanafilt = data.filter(function (d) {
+        return d["drug"] === "marijuana"
+      })
+      marijuanaButton.onclick = function (d) {
+        let circles = chartArea.selectAll("circle.dot").data(marijuanafilt)
+          .join(enter => enter.append("circle")
+            .attr("class", "dot")
+            .attr("opacity", 0.75),
+            update => update.attr("fill", d => drugScale(d['drug']))
+          )
+          .attr("cx", d => ageScale(d['age']))
+          .attr("cy", d => useScale(d['use'] + 0.5))
+          .attr("r", 13)
+          .style("stroke", "white")
+          .attr("fill", d => drugScale(d['drug'] = ["marijuana"]))
+          .attr("freq", d => d["freq"])
+          .attr("drug", d => d["drug"])
+          .attr("age", d => d["age"])
+          .attr("use", d => d["use"])
+          .on("mouseover", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", drugScale(d['drug']))
+              .attr("stroke-width", 8);
+
+            d3.select("#freq").text("frequency: " + d['freq'] + "%")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#drug").text(d['drug'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#age").text("age " + d['age'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#use").text(d['use'] + " uses in past yr")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+          })
+          .on("mouseout", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", "")
+              .attr("stroke-width", 1)
+              .attr("fill", d => drugScale(d['drug'] = ["marijuana"]));
+
+            d3.select("#freq").text("");
+            d3.select("#drug").text("");
+            d3.select("#age").text("");
+            d3.select("#use").text("");
+          });
+      }
+
+      // cocaine
+      var cocaineButton = document.getElementById('cocaine');
+      var cocainefilt = data.filter(function (d) {
+        return d["drug"] === "cocaine"
+      })
+      cocaineButton.onclick = function (d) {
+        let circles = chartArea.selectAll("circle.dot").data(cocainefilt)
+          .join(enter => enter.append("circle")
+            .attr("class", "dot")
+            .attr("opacity", 0.75),
+            update => update.attr("fill", d => drugScale(d['drug']))
+          )
+          .attr("cx", d => ageScale(d['age']))
+          .attr("cy", d => useScale(d['use'] + 0.5))
+          .attr("r", 13)
+          .style("stroke", "white")
+          .attr("fill", d => drugScale(d['drug'] = ["cocaine"]))
+          .attr("freq", d => d["freq"])
+          .attr("drug", d => d["drug"])
+          .attr("age", d => d["age"])
+          .attr("use", d => d["use"])
+          .on("mouseover", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", drugScale(d['drug']))
+              .attr("stroke-width", 8);
+
+            d3.select("#freq").text("frequency: " + d['freq'] + "%")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#drug").text(d['drug'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#age").text("age " + d['age'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#use").text(d['use'] + " uses in past yr")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+          })
+          .on("mouseout", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", "")
+              .attr("stroke-width", 1)
+              .attr("fill", drugScale(d['drug']));
+
+            d3.select("#freq").text("");
+            d3.select("#drug").text("");
+            d3.select("#age").text("");
+            d3.select("#use").text("");
+          });
+      }
+
+
+      // hallucinogen
+      var hallucinogenButton = document.getElementById('hallucinogen');
+      var hallucinogenfilt = data.filter(function (d) {
+        return d["drug"] === "hallucinogen"
+      })
+      hallucinogenButton.onclick = function (d) {
+        let circles = chartArea.selectAll("circle.dot").data(hallucinogenfilt)
+          .join(enter => enter.append("circle")
+            .attr("class", "dot")
+            .attr("opacity", 0.75),
+            update => update.attr("fill", d => drugScale(d['drug']))
+          )
+          .attr("cx", d => ageScale(d['age']))
+          .attr("cy", d => useScale(d['use'] + 0.5))
+          .attr("r", 13)
+          .style("stroke", "white")
+          .attr("fill", d => drugScale(d['drug'] = ["hallucinogen"]))
+          .attr("freq", d => d["freq"])
+          .attr("drug", d => d["drug"])
+          .attr("age", d => d["age"])
+          .attr("use", d => d["use"])
+          .on("mouseover", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", drugScale(d['drug']))
+              .attr("stroke-width", 8);
+
+            d3.select("#freq").text("frequency: " + d['freq'] + "%")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#drug").text(d['drug'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#age").text("age " + d['age'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#use").text(d['use'] + " uses in past yr")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+          })
+          .on("mouseout", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", "")
+              .attr("stroke-width", 1)
+              .attr("fill", drugScale(d['drug']));
+
+            d3.select("#freq").text("");
+            d3.select("#drug").text("");
+            d3.select("#age").text("");
+            d3.select("#use").text("");
+          });
+      }
+
+
+      // pain reliever
+      var painrelieverButton = document.getElementById('painreliever');
+      var painrelieverfilt = data.filter(function (d) {
+        return d["drug"] === "pain reliever"
+      })
+      painrelieverButton.onclick = function (d) {
+        let circles = chartArea.selectAll("circle.dot").data(painrelieverfilt)
+          .join(enter => enter.append("circle")
+            .attr("class", "dot")
+            .attr("opacity", 0.75),
+            update => update.attr("fill", d => drugScale(d['drug']))
+          )
+          .attr("cx", d => ageScale(d['age']))
+          .attr("cy", d => useScale(d['use'] + 0.5))
+          .attr("r", 13)
+          .style("stroke", "white")
+          .attr("fill", d => drugScale(d['drug'] = ["pain reliever"]))
+          .attr("freq", d => d["freq"])
+          .attr("drug", d => d["drug"])
+          .attr("age", d => d["age"])
+          .attr("use", d => d["use"])
+          .on("mouseover", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", drugScale(d['drug']))
+              .attr("stroke-width", 8);
+
+            d3.select("#freq").text("frequency: " + d['freq'] + "%")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#drug").text(d['drug'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#age").text("age " + d['age'])
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+            d3.select("#use").text(d['use'] + " uses in past yr")
+              .attr("fill", "#fffff2")
+              .style("font-size", "20px")
+              .style("font-family", "serif");
+          })
+          .on("mouseout", function (d) {
+
+            d3.select(this)
+              .transition().duration(150)
+              .attr("stroke", "")
+              .attr("stroke-width", 1)
+              .attr("fill", drugScale(d['drug']));
+
+            d3.select("#freq").text("");
+            d3.select("#drug").text("");
+            d3.select("#age").text("");
+            d3.select("#use").text("");
+          });
+      }
+    }
+    requestData();
+
+  </script>
+</body>
+
+</html>
